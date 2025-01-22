@@ -255,7 +255,58 @@ function formatValue(value) {
     return value;
 }
 
+// Modify formatCategoryContent to include recommendations
 function formatCategoryContent(category, data) {
+    const recommendations = generateSEORecommendations(category, data);
+    
+    // Your existing category content formatting code here...
+    const existingContent = formatCategoryContentWithoutRecommendations(category, data);
+
+    // Add recommendations section if there are any
+    const recommendationsHTML = recommendations.length > 0 ? `
+        <div class="mt-6 border-t border-gray-200 pt-6">
+            <h4 class="text-lg font-medium text-gray-900 mb-4">
+                Recommendations
+            </h4>
+            <div class="space-y-4">
+                ${recommendations.map(rec => `
+                    <div class="bg-white rounded-lg border border-${getSeverityColor(rec.severity)}-200 p-4">
+                        <div class="flex items-start">
+                            <div class="flex-shrink-0">
+                                ${getSeverityIcon(rec.severity)}
+                            </div>
+                            <div class="ml-3 w-full">
+                                <h5 class="text-sm font-medium text-gray-900">
+                                    ${rec.issue}
+                                </h5>
+                                <div class="mt-2 text-sm text-gray-600">
+                                    <p class="mb-2">${rec.recommendation}</p>
+                                    <div class="grid grid-cols-2 gap-4 mt-3">
+                                        <div class="bg-gray-50 p-3 rounded-md">
+                                            <span class="block text-xs font-medium text-gray-500">Current</span>
+                                            <span class="block mt-1 text-sm">${rec.current}</span>
+                                        </div>
+                                        <div class="bg-gray-50 p-3 rounded-md">
+                                            <span class="block text-xs font-medium text-gray-500">Ideal</span>
+                                            <span class="block mt-1 text-sm">${rec.ideal}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `).join('')}
+            </div>
+        </div>
+    ` : '';
+
+    return `
+        ${existingContent}
+        ${recommendationsHTML}
+    `;
+}
+
+function formatCategoryContentWithoutRecommendations(category, data) {
     if (category === 'links') {
         return `
             <div class="space-y-6">
@@ -424,5 +475,105 @@ function formatLink(link, isInternal) {
         </div>
     `;
 }
+
+// Add this function to generate detailed SEO recommendations
+function generateSEORecommendations(category, data) {
+    const recommendations = {
+        meta_tags: (data) => {
+            const recs = [];
+            if (!data.title || data.title.length < 50) {
+                recs.push({
+                    severity: 'high',
+                    issue: 'Meta title is too short',
+                    recommendation: 'Aim for 50-60 characters. Include primary keyword near the beginning.',
+                    current: data.title || 'Missing',
+                    ideal: '50-60 characters with primary keyword'
+                });
+            }
+            if (!data.description || data.description.length < 120) {
+                recs.push({
+                    severity: 'high',
+                    issue: 'Meta description needs improvement',
+                    recommendation: 'Write a compelling description between 120-160 characters with a clear call-to-action.',
+                    current: data.description || 'Missing',
+                    ideal: '120-160 characters with keywords and CTA'
+                });
+            }
+            return recs;
+        },
+
+        headers: (data) => {
+            const recs = [];
+            if (!data.h1 || data.h1.count === 0) {
+                recs.push({
+                    severity: 'high',
+                    issue: 'Missing H1 heading',
+                    recommendation: 'Add a single H1 heading containing your primary keyword',
+                    current: 'No H1 found',
+                    ideal: 'One H1 tag with primary keyword'
+                });
+            }
+            if (data.h1 && data.h1.count > 1) {
+                recs.push({
+                    severity: 'medium',
+                    issue: 'Multiple H1 headings',
+                    recommendation: 'Use only one H1 heading per page',
+                    current: `${data.h1.count} H1 tags found`,
+                    ideal: 'One H1 tag'
+                });
+            }
+            return recs;
+        },
+
+        images: (data) => {
+            const recs = [];
+            data.forEach((img, index) => {
+                if (!img.alt || img.alt.trim() === '') {
+                    recs.push({
+                        severity: 'high',
+                        issue: `Missing alt text (Image ${index + 1})`,
+                        recommendation: 'Add descriptive alt text for accessibility and SEO',
+                        current: 'No alt text',
+                        ideal: 'Descriptive alt text with keywords if relevant'
+                    });
+                }
+                if (img.size && img.size > 200000) {
+                    recs.push({
+                        severity: 'medium',
+                        issue: `Large image file (Image ${index + 1})`,
+                        recommendation: 'Compress image to improve page load speed',
+                        current: `${Math.round(img.size/1024)}KB`,
+                        ideal: '< 200KB'
+                    });
+                }
+            });
+            return recs;
+        }
+    };
+
+    return recommendations[category] ? recommendations[category](data) : [];
+}
+
+// Helper functions for recommendations display
+function getSeverityColor(severity) {
+    switch(severity) {
+        case 'high': return 'red';
+        case 'medium': return 'yellow';
+        case 'low': return 'blue';
+        default: return 'gray';
+    }
+}
+
+function getSeverityIcon(severity) {
+    const color = getSeverityColor(severity);
+    return `
+        <div class="w-6 h-6 text-${color}-600">
+            <i class="fas ${severity === 'high' ? 'fa-exclamation-circle' : 
+                          severity === 'medium' ? 'fa-exclamation-triangle' : 
+                          'fa-info-circle'}"></i>
+        </div>
+    `;
+}
+
 </script>
 {% endblock %}
