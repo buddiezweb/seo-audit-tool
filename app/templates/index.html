@@ -548,6 +548,117 @@ function generateSEORecommendations(category, data) {
                 }
             });
             return recs;
+        },
+
+        security: (data) => {
+            const recs = [];
+            console.log(data);
+            // Check SSL/HTTPS
+            if (data.https_enabled !== true) {
+                recs.push({
+                    severity: 'high',
+                    issue: 'Missing HTTPS Security',
+                    recommendation: 'Implement SSL/TLS certificate to enable HTTPS',
+                    current: 'Using insecure HTTP',
+                    ideal: 'HTTPS with valid SSL certificate'
+                });
+            }
+
+            // Check Security Headers
+            if (data.headers) {
+                if (!data.headers['Content-Security-Policy']) {
+                    recs.push({
+                        severity: 'high',
+                        issue: 'Missing Content Security Policy',
+                        recommendation: 'Implement CSP headers to prevent XSS attacks',
+                        current: 'No CSP header',
+                        ideal: 'Properly configured CSP header'
+                    });
+                }
+
+                if (!data.headers['X-Frame-Options']) {
+                    recs.push({
+                        severity: 'medium',
+                        issue: 'Missing X-Frame-Options',
+                        recommendation: 'Add X-Frame-Options header to prevent clickjacking',
+                        current: 'No X-Frame-Options header',
+                        ideal: 'X-Frame-Options: SAMEORIGIN or DENY'
+                    });
+                }
+
+                if (!data.headers['Strict-Transport-Security']) {
+                    recs.push({
+                        severity: 'high',
+                        issue: 'Missing HSTS Header',
+                        recommendation: 'Implement HSTS to enforce HTTPS connections',
+                        current: 'No HSTS header',
+                        ideal: 'Strict-Transport-Security with appropriate max-age'
+                    });
+                }
+            }
+
+            return recs;
+        },
+
+        performance: (data) => {
+            const recs = [];
+
+            // Check Page Load Time
+            if (data.loadTime > 3000) { // 3000ms = 3s
+                recs.push({
+                    severity: 'high',
+                    issue: 'Slow Page Load Time',
+                    recommendation: 'Optimize page speed through caching, compression, and resource optimization',
+                    current: `${(data.loadTime/1000).toFixed(2)}s`,
+                    ideal: '< 3 seconds'
+                });
+            }
+
+            // Check Resource Size
+            if (data.totalSize > 5000000) { // 5MB
+                recs.push({
+                    severity: 'medium',
+                    issue: 'Large Page Size',
+                    recommendation: 'Reduce total page size by optimizing images and minifying resources',
+                    current: `${Math.round(data.totalSize/1024/1024)}MB`,
+                    ideal: '< 5MB'
+                });
+            }
+
+            // Check Resource Compression
+            if (!data.headers?.['Content-Encoding']) {
+                recs.push({
+                    severity: 'medium',
+                    issue: 'Missing Resource Compression',
+                    recommendation: 'Enable GZIP/Brotli compression for text-based resources',
+                    current: 'No compression detected',
+                    ideal: 'GZIP/Brotli compression enabled'
+                });
+            }
+
+            // Check Browser Caching
+            if (!data.headers?.['Cache-Control'] && !data.headers?.['Expires']) {
+                recs.push({
+                    severity: 'medium',
+                    issue: 'Missing Cache Headers',
+                    recommendation: 'Implement browser caching through proper cache-control headers',
+                    current: 'No cache headers found',
+                    ideal: 'Cache-Control with appropriate max-age'
+                });
+            }
+
+            // Check for Render-Blocking Resources
+            if (data.blockingResources && data.blockingResources.length > 0) {
+                recs.push({
+                    severity: 'medium',
+                    issue: 'Render-Blocking Resources',
+                    recommendation: 'Defer or async load non-critical JavaScript and CSS',
+                    current: `${data.blockingResources.length} blocking resources`,
+                    ideal: 'No render-blocking resources'
+                });
+            }
+
+            return recs;
         }
     };
 
