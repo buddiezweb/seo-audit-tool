@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="min-h-screen py-12 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-4xl mx-auto bg-white rounded-lg shadow-lg">
+        <div class="px-8 py-6 border-b border-gray-200">
+            <h1 class="text-2xl font-bold text-gray-900">SEO Audit Report</h1>
+        </div>
+        
+        <div class="p-8 space-y-6">
+            <!-- Technical SEO Section -->
+            <div class="bg-gray-50 rounded-lg p-6">
+                <h2 class="text-xl font-semibold text-gray-900 mb-4">Technical SEO</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {% for key, value in results.technical.items() %}
+                    <div class="bg-white p-4 rounded shadow">
+                        <span class="text-sm font-medium text-gray-500">{{ key }}</span>
+                        <p class="mt-1 text-gray-900">{{ value }}</p>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Content SEO Section -->
+            <div class="bg-gray-50 rounded-lg p-6">
+                <h2 class="text-xl font-semibold text-gray-900 mb-4">Content Analysis</h2>
+                <!-- Add content analysis results here -->
+            </div>
+
+            <!-- Performance Section -->
+            <div class="bg-gray-50 rounded-lg p-6">
+                <h2 class="text-xl font-semibold text-gray-900 mb-4">Performance Metrics</h2>
+                <!-- Add performance metrics here -->
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

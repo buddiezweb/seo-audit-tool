@@ -1,0 +1,428 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="min-h-[calc(100vh-12rem)]">
+    <!-- Hero Section -->
+    <div class="text-center mb-12">
+        <h1 class="text-4xl font-extrabold text-gray-900 sm:text-5xl md:text-6xl">
+            Website SEO Analyzer
+        </h1>
+        <p class="mt-3 max-w-md mx-auto text-base text-gray-500 sm:text-lg md:mt-5 md:text-xl md:max-w-3xl">
+            Analyze your website's SEO performance with our comprehensive audit tool
+        </p>
+    </div>
+
+    <!-- Main Card -->
+    <div class="max-w-3xl mx-auto bg-white rounded-xl shadow-md overflow-hidden">
+        <!-- Form Section -->
+        <div id="form-section" class="p-8">
+            <div class="space-y-6">
+                <form id="audit-form" class="space-y-6">
+                    <div class="relative">
+                        <label for="url" class="block text-sm font-medium text-gray-700 mb-2">
+                            Enter Website URL
+                        </label>
+                        <div class="mt-1 flex rounded-md shadow-sm">
+                            <span class="inline-flex items-center px-3 rounded-l-md border border-r-0 border-gray-300 bg-gray-50 text-gray-500 text-sm">
+                                https://
+                            </span>
+                            <input type="text" name="url" id="url" required
+                                class="focus:ring-indigo-500 focus:border-indigo-500 flex-1 block w-full rounded-none rounded-r-md sm:text-sm border-gray-300"
+                                placeholder="example.com" value="www.buddiez.in">
+                        </div>
+                    </div>
+                    <button type="submit"
+                        class="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors duration-200">
+                        <i class="fas fa-search mr-2"></i>
+                        Start SEO Audit
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Progress Section -->
+        <div id="progress-section" class="hidden p-8">
+            <div class="space-y-6">
+                <div class="text-center">
+                    <div class="inline-flex items-center px-4 py-2 font-semibold leading-6 text-sm shadow rounded-md text-white bg-indigo-500">
+                        <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        Analyzing website...
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Results Section -->
+        <div id="results-section" class="hidden">
+            <!-- Results will be dynamically inserted here -->
+        </div>
+    </div>
+
+    <!-- Features Section -->
+    <div class="mt-12 grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
+        <div class="bg-white overflow-hidden shadow rounded-lg">
+            <div class="p-5">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-tachometer-alt text-indigo-600 text-3xl"></i>
+                    </div>
+                    <div class="ml-5">
+                        <h3 class="text-lg font-medium text-gray-900">Performance Analysis</h3>
+                        <p class="mt-2 text-sm text-gray-500">Check page load times and performance metrics</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white overflow-hidden shadow rounded-lg">
+            <div class="p-5">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-shield-alt text-indigo-600 text-3xl"></i>
+                    </div>
+                    <div class="ml-5">
+                        <h3 class="text-lg font-medium text-gray-900">Security Check</h3>
+                        <p class="mt-2 text-sm text-gray-500">Verify SSL certificates and security headers</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white overflow-hidden shadow rounded-lg">
+            <div class="p-5">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-tags text-indigo-600 text-3xl"></i>
+                    </div>
+                    <div class="ml-5">
+                        <h3 class="text-lg font-medium text-gray-900">Meta Tags Analysis</h3>
+                        <p class="mt-2 text-sm text-gray-500">Review meta titles, descriptions, and keywords</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.getElementById('audit-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const formSection = document.getElementById('form-section');
+    const progressSection = document.getElementById('progress-section');
+    const resultsSection = document.getElementById('results-section');
+    const urlInput = document.getElementById('url');
+    
+    let url = urlInput.value.trim();
+    if (!url.match(/^https?:\/\/.+/)) {
+        url = 'https://' + url;
+        urlInput.value = url;
+    }
+    
+    formSection.classList.add('hidden');
+    progressSection.classList.remove('hidden');
+    
+    try {
+        const response = await fetch('/audit', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: `url=${encodeURIComponent(url)}`
+        });
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const results = await response.json();
+        resultsSection.innerHTML = formatResults(results);
+        progressSection.classList.add('hidden');
+        resultsSection.classList.remove('hidden');
+        
+    } catch (error) {
+        progressSection.innerHTML = `
+            <div class="text-red-600 p-4 rounded-md bg-red-50">
+                <p class="font-medium">Error: ${error.message}</p>
+                <button onclick="location.reload()" 
+                        class="mt-4 px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700">
+                    Try Again
+                </button>
+            </div>`;
+    }
+});
+
+function formatResults(results) {
+    if (results.error) {
+        return `
+            <div class="p-8">
+                <div class="bg-red-50 border-l-4 border-red-400 p-4">
+                    <div class="flex">
+                        <div class="flex-shrink-0">
+                            <i class="fas fa-exclamation-circle text-red-400"></i>
+                        </div>
+                        <div class="ml-3">
+                            <p class="text-sm text-red-700">Error: ${results.error}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    return `
+        <div class="bg-white shadow-lg rounded-lg overflow-hidden">
+            <!-- Summary Section -->
+            <div class="p-6 bg-gray-50 border-b border-gray-200">
+                <h2 class="text-xl font-bold text-gray-900">Audit Results for: ${results.basic_info?.url || 'Website'}</h2>
+            </div>
+
+            <!-- Results Grid -->
+            <div class="grid grid-cols-1 gap-6 p-6">
+                ${Object.entries(results).map(([category, data]) => `
+                    <div class="bg-white rounded-lg border border-gray-200 overflow-hidden">
+                        <div class="px-4 py-5 sm:px-6 bg-gray-50 border-b border-gray-200">
+                            <h3 class="text-lg font-medium leading-6 text-gray-900 capitalize">
+                                ${category.replace(/_/g, ' ')}
+                            </h3>
+                        </div>
+                        <div class="px-4 py-5 sm:p-6">
+                            ${formatCategoryContent(category, data)}
+                        </div>
+                    </div>
+                `).join('')}
+            </div>
+
+            <!-- Action Button -->
+            <div class="px-6 py-4 bg-gray-50 border-t border-gray-200">
+                <button onclick="location.reload()" 
+                    class="w-full inline-flex justify-center items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                    <i class="fas fa-redo mr-2"></i>
+                    Run Another Audit
+                </button>
+            </div>
+        </div>
+    `;
+}
+
+function formatCategoryData(data) {
+    if (typeof data === 'object' && data !== null) {
+        return `
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                ${Object.entries(data).map(([key, value]) => `
+                    <div class="bg-gray-50 p-4 rounded-md">
+                        <dt class="text-sm font-medium text-gray-500 capitalize">
+                            ${key.replace(/_/g, ' ')}
+                        </dt>
+                        <dd class="mt-1 text-sm text-gray-900">
+                            ${formatValue(value)}
+                        </dd>
+                    </div>
+                `).join('')}
+            </div>
+        `;
+    }
+    return `<p class="text-sm text-gray-900">${data}</p>`;
+}
+
+function formatValue(value) {
+    if (value === null || value === undefined) {
+        return '<span class="text-gray-400">Not available</span>';
+    }
+
+    if (typeof value === 'boolean') {
+        return value ? 
+            '<span class="text-green-600"><i class="fas fa-check-circle"></i> Yes</span>' : 
+            '<span class="text-red-600"><i class="fas fa-times-circle"></i> No</span>';
+    }
+
+    if (typeof value === 'object') {
+        return `
+            <div class="mt-2 space-y-2">
+                ${Object.entries(value).map(([k, v]) => `
+                    <div class="flex justify-between items-center text-sm">
+                        <span class="text-gray-500 capitalize">${k.replace(/_/g, ' ')}</span>
+                        <span class="text-gray-900">${v}</span>
+                    </div>
+                `).join('')}
+            </div>
+        `;
+    }
+
+    return value;
+}
+
+function formatCategoryContent(category, data) {
+    if (category === 'links') {
+        return `
+            <div class="space-y-6">
+                <!-- Summary Stats -->
+                <div class="grid grid-cols-3 gap-4">
+                    ${Object.entries(data.summary).map(([key, value]) => `
+                        <div class="bg-gray-50 rounded-lg p-4 text-center">
+                            <dt class="text-sm font-medium text-gray-500 capitalize">
+                                ${key.replace(/_/g, ' ')}
+                            </dt>
+                            <dd class="mt-1 text-xl font-semibold text-gray-900">
+                                ${value}
+                            </dd>
+                        </div>
+                    `).join('')}
+                </div>
+
+                <!-- Internal Links -->
+                <div class="bg-white rounded-lg border border-gray-200">
+                    <div class="px-4 py-3 border-b border-gray-200 bg-gray-50">
+                        <h3 class="text-lg font-medium text-gray-900">
+                            Internal Links (${data.internal_links.length})
+                        </h3>
+                    </div>
+                    <div class="divide-y divide-gray-200">
+                        ${data.internal_links.map(link => formatLink(link, true)).join('')}
+                    </div>
+                </div>
+
+                <!-- External Links -->
+                <div class="bg-white rounded-lg border border-gray-200">
+                    <div class="px-4 py-3 border-b border-gray-200 bg-gray-50">
+                        <h3 class="text-lg font-medium text-gray-900">
+                            External Links (${data.external_links.length})
+                        </h3>
+                    </div>
+                    <div class="divide-y divide-gray-200">
+                        ${data.external_links.map(link => formatLink(link, false)).join('')}
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+    if (category === 'images') {
+        console.log(data);
+        return formatImageSection(data);
+    }
+    if (category === 'headers') {
+        return `
+            <div class="space-y-4">
+                ${Object.entries(data).map(([headerType, headerData]) => `
+                    <div class="border rounded-lg p-4">
+                        <div class="flex items-center justify-between mb-2">
+                            <h4 class="text-sm font-medium text-gray-900 uppercase">${headerType}</h4>
+                            <span class="px-2 py-1 text-xs font-medium rounded-full ${
+                                headerData.count > 0 ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
+                            }">
+                                Count: ${headerData.count}
+                            </span>
+                        </div>
+                        ${headerData.content.length > 0 ? `
+                            <div class="mt-2">
+                                <ul class="space-y-1">
+                                    ${headerData.content.map(heading => `
+                                        <li class="text-sm text-gray-600 pl-3 border-l-2 border-gray-200">
+                                            ${heading}
+                                        </li>
+                                    `).join('')}
+                                </ul>
+                            </div>
+                        ` : ''}
+                    </div>
+                `).join('')}
+            </div>
+        `;
+    }
+
+    if (typeof data === 'object' && data !== null) {
+        return `
+            <dl class="grid grid-cols-1 gap-4">
+                ${Object.entries(data).map(([key, value]) => `
+                    <div class="bg-gray-50 px-4 py-3 rounded-lg">
+                        <dt class="text-sm font-medium text-gray-500 capitalize">
+                            ${key.replace(/_/g, ' ')}
+                        </dt>
+                        <dd class="mt-1 text-sm text-gray-900">
+                            ${formatValue(value)}
+                        </dd>
+                    </div>
+                `).join('')}
+            </dl>
+        `;
+    }
+
+    return `<p class="text-sm text-gray-900">${data}</p>`;
+}
+
+function formatImageSection(data) {
+    console.log(data); 
+    return `
+        <div class="space-y-4">
+            <div class="bg-white rounded-lg border border-gray-200">
+                <div class="px-4 py-3 border-b border-gray-200">
+                    <h3 class="text-lg font-medium">Images (${data.length})</h3>
+                </div>
+                <div class="divide-y divide-gray-200">
+                    ${data.map((img, index) => {
+                        console.log(img.src); 
+                            return `
+                                <div class="p-4">
+                                    <div class="mb-2 font-medium text-sm text-gray-700">
+                                        Image URL ${index + 1} (${img.src})
+                                    </div>
+                                    <div class="flex items-start space-x-4">
+                                        <div class="flex-shrink-0 w-24 h-24">
+                                            <img src="${img.src}" 
+                                                 class="w-full h-full object-contain"
+                                                 alt="Image ${index + 1}">
+                                        </div>
+                                    </div>
+                                </div>
+                            `;
+                    }).join('')}
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+function copyToClipboard(text) {
+    navigator.clipboard.writeText(text).then(() => {
+        const toast = document.createElement('div');
+        toast.className = 'fixed bottom-4 right-4 bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg z-50';
+        toast.textContent = 'Copied to clipboard!';
+        document.body.appendChild(toast);
+        setTimeout(() => toast.remove(), 2000);
+    });
+}
+
+function formatLink(link, isInternal) {
+    return `
+        <div class="p-4 hover:bg-gray-50">
+            <div class="flex items-start justify-between">
+                <div class="min-w-0 flex-1">
+                    <p class="text-sm font-medium text-indigo-600 truncate">
+                        ${link.text}
+                    </p>
+                    <p class="mt-1 text-sm text-gray-600 break-all">
+                        ${link.url}
+                    </p>
+                    ${link.title ? `
+                        <p class="mt-1 text-sm text-gray-500">
+                            Title: ${link.title}
+                        </p>
+                    ` : ''}
+                </div>
+                <div class="ml-4 flex-shrink-0">
+                    <a href="${link.url}" 
+                       target="_blank" 
+                       class="inline-flex items-center px-3 py-1 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                        <i class="fas fa-external-link-alt mr-2"></i>
+                        Visit
+                    </a>
+                </div>
+            </div>
+        </div>
+    `;
+}
+</script>
+{% endblock %}
