@@ -180,16 +180,26 @@ function formatResults(results) {
                 <h2 class="text-xl font-bold text-gray-900">Audit Results for: ${results.basic_info?.url || 'Website'}</h2>
             </div>
 
-            <!-- Results Grid -->
-            <div class="grid grid-cols-1 gap-6 p-6">
-                ${Object.entries(results).map(([category, data]) => `
-                    <div class="bg-white rounded-lg border border-gray-200 overflow-hidden">
-                        <div class="px-4 py-5 sm:px-6 bg-gray-50 border-b border-gray-200">
-                            <h3 class="text-lg font-medium leading-6 text-gray-900 capitalize">
-                                ${category.replace(/_/g, ' ')}
-                            </h3>
-                        </div>
-                        <div class="px-4 py-5 sm:p-6">
+            <!-- Accordion Results -->
+            <div class="divide-y divide-gray-200">
+                ${Object.entries(results).map(([category, data], index) => `
+                    <div class="accordion-item" data-category="${category}">
+                        <!-- Accordion Header -->
+                        <button class="accordion-header w-full px-6 py-4 flex items-center justify-between bg-white hover:bg-gray-50 transition-colors duration-200"
+                                onclick="toggleAccordion('${category}')">
+                            <div class="flex items-center">
+                                <span class="text-lg font-medium text-gray-900 capitalize">
+                                    ${category.replace(/_/g, ' ')}
+                                </span>
+                                ${getCategoryStatusBadge(category, data)}
+                            </div>
+                            <div class="ml-4">
+                                <i class="fas fa-chevron-down text-gray-400 transform transition-transform duration-200"></i>
+                            </div>
+                        </button>
+                        
+                        <!-- Accordion Content -->
+                        <div class="accordion-content hidden px-6 py-4 bg-gray-50">
                             ${formatCategoryContent(category, data)}
                         </div>
                     </div>
@@ -206,6 +216,7 @@ function formatResults(results) {
             </div>
         </div>
     `;
+
 }
 
 function formatCategoryData(data) {
@@ -685,6 +696,85 @@ function getSeverityIcon(severity) {
         </div>
     `;
 }
+
+// Add these new functions for accordion functionality
+function toggleAccordion(category) {
+    const accordionItem = document.querySelector(`[data-category="${category}"]`);
+    const content = accordionItem.querySelector('.accordion-content');
+    const icon = accordionItem.querySelector('.fa-chevron-down');
+    
+    // Close other accordions
+    document.querySelectorAll('.accordion-content').forEach(item => {
+        if (item !== content) {
+            item.classList.add('hidden');
+            item.previousElementSibling.querySelector('.fa-chevron-down')
+                .classList.remove('rotate-180');
+        }
+    });
+
+    // Toggle current accordion
+    content.classList.toggle('hidden');
+    icon.classList.toggle('rotate-180');
+}
+
+function getCategoryStatusBadge(category, data) {
+    const status = getCategoryStatus(category, data);
+    return `
+        <span class="ml-3 px-2 py-1 text-xs font-medium rounded-full 
+            ${status.color}">
+            ${status.text}
+        </span>
+    `;
+}
+
+function getCategoryStatus(category, data) {
+    // Define status logic for each category
+    const statusChecks = {
+        meta_tags: (data) => {
+            const hasTitle = data.title && data.title.length >= 50;
+            const hasDesc = data.description && data.description.length >= 120;
+            return hasTitle && hasDesc ? 
+                { text: 'Optimized', color: 'bg-green-100 text-green-800' } : 
+                { text: 'Needs Improvement', color: 'bg-yellow-100 text-yellow-800' };
+        },
+        headers: (data) => {
+            const hasH1 = data.h1 && data.h1.count === 1;
+            return hasH1 ? 
+                { text: 'Good Structure', color: 'bg-green-100 text-green-800' } : 
+                { text: 'Review Needed', color: 'bg-yellow-100 text-yellow-800' };
+        },
+        // Add more category status checks as needed
+    };
+
+    return statusChecks[category] ? 
+        statusChecks[category](data) : 
+        { text: 'Analyzed', color: 'bg-blue-100 text-blue-800' };
+}
+
+// Add this CSS to your existing styles
+const styles = `
+    .accordion-header:focus {
+        outline: none;
+        ring-2 ring-offset-2 ring-indigo-500;
+    }
+
+    .accordion-content {
+        transition: all 0.3s ease-in-out;
+    }
+
+    .fa-chevron-down {
+        transition: transform 0.3s ease-in-out;
+    }
+
+    .rotate-180 {
+        transform: rotate(180deg);
+    }
+`;
+
+// Add the styles to the document
+const styleSheet = document.createElement("style");
+styleSheet.innerText = styles;
+document.head.appendChild(styleSheet);
 
 </script>
 {% endblock %}
